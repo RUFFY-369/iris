@@ -687,7 +687,7 @@ class Trainer:
             metrics_actor_critic = self.train_component('actor_Critic',2, self.optimizer_actor_critic, **cfg_actor_critic)
         self.model.rl_agent.actor_critic.eval()
 
-        print("metricssssssssS", **metrics_tokenizer, **metrics_world_model, **metrics_actor_critic)
+        print("metricssssssssS", metrics_tokenizer, metrics_world_model, metrics_actor_critic)
 
         return [{'epoch': epoch, **metrics_tokenizer, **metrics_world_model, **metrics_actor_critic}]
 
