@@ -16,14 +16,14 @@ wandb:
   notes: null
 
 initialization:
-  path_to_checkpoint: null
-  load_tokenizer: False
-  load_world_model: False
-  load_actor_critic: False
+  path_to_checkpoint: "/home/ruffy-369/HuggingFace/iris_pretrained_models/old_folders_pretrained/pretrained_models/Breakout.pt"
+  load_tokenizer: True
+  load_world_model: True
+  load_actor_critic: True
 
 common:
   epochs: 600
-  device: cuda:0
+  device: cpu
   do_checkpoint: True
   seed: 0
   sequence_length: ${world_model.max_blocks}
@@ -54,24 +54,24 @@ training:
   should: True
   learning_rate: 0.0001
   tokenizer:
-    batch_num_samples: 256
+    batch_num_samples: 32
     grad_acc_steps: 1
     max_grad_norm: 10.0
-    start_after_epochs: 5
-    steps_per_epoch: 200
+    start_after_epochs: 1
+    steps_per_epoch: 50
   world_model:
-    batch_num_samples: 64
+    batch_num_samples: 8
     grad_acc_steps: 1
     max_grad_norm: 10.0
     weight_decay: 0.01
-    start_after_epochs: 25
-    steps_per_epoch: 200
+    start_after_epochs: 3
+    steps_per_epoch: 50
   actor_critic:
-    batch_num_samples: 64
+    batch_num_samples: 8
     grad_acc_steps: 1
     max_grad_norm: 10.0
-    start_after_epochs: 50
-    steps_per_epoch: 200
+    start_after_epochs: 6
+    steps_per_epoch: 50
     imagine_horizon: ${common.sequence_length}
     burn_in: 20
     gamma: 0.995
