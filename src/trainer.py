@@ -622,6 +622,7 @@ class Trainer:
         print(f'{sum(p.numel() for p in self.agent.world_model.parameters())} parameters in agent.world_model')
         print(f'{sum(p.numel() for p in self.agent.actor_critic.parameters())} parameters in agent.actor_critic')
         self.model = t.IrisModel(t.IrisConfig())
+        self.model.to(self.device)
         self.optimizer_tokenizer = torch.optim.Adam(self.model.rl_agent.discrete_autoencoder.parameters(), lr=cfg.training.learning_rate)
         self.optimizer_world_model = configure_optimizer(self.model.rl_agent.world_model, cfg.training.learning_rate, cfg.training.world_model.weight_decay)
         self.optimizer_actor_critic = torch.optim.Adam(self.model.rl_agent.actor_critic.parameters(), lr=cfg.training.learning_rate)
