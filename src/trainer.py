@@ -676,46 +676,50 @@ class Trainer:
         if epoch > cfg_tokenizer.start_after_epochs:
             
             
-            metrics_tokenizer = self.train_component('tokenizer',0, self.optimizer_tokenizer, **cfg_tokenizer)
+            metrics_tokenizer = self.train_component('tokenizer',self.optimizer_tokenizer, **cfg_tokenizer)
         self.model.rl_agent.discrete_autoencoder.eval()
 
         if epoch > cfg_world_model.start_after_epochs:
-            metrics_world_model = self.train_component('world_model',1, self.optimizer_world_model, **cfg_world_model)
+            metrics_world_model = self.train_component('world_model', self.optimizer_world_model, **cfg_world_model)
         self.model.rl_agent.world_model.eval()
 
         if epoch > cfg_actor_critic.start_after_epochs:
-            metrics_actor_critic = self.train_component('actor_Critic',2, self.optimizer_actor_critic, **cfg_actor_critic)
+            metrics_actor_critic = self.train_component('actor_critic', self.optimizer_actor_critic, **cfg_actor_critic)
         self.model.rl_agent.actor_critic.eval()
 
         print("metricssssssssS", metrics_tokenizer, metrics_world_model, metrics_actor_critic)
 
         return [{'epoch': epoch, **metrics_tokenizer, **metrics_world_model, **metrics_actor_critic}]
 
-    def train_component(self, component:str, idx, optimizer: torch.optim.Optimizer, steps_per_epoch: int, grad_acc_steps: int, max_grad_norm: Optional[float], **kwargs_loss: Any) -> Dict[str, float]:
+    def train_component(self, component:str,  optimizer: torch.optim.Optimizer, steps_per_epoch: int, grad_acc_steps: int, max_grad_norm: Optional[float], **kwargs_loss: Any) -> Dict[str, float]:
         loss_total_epoch = 0.0
         intermediate_losses = defaultdict(float)
 
         for _ in tqdm(range(steps_per_epoch), desc=f"Training {component}", file=sys.stdout):
             optimizer.zero_grad()
             for _ in range(grad_acc_steps):
-                batch_t = self.train_dataset.sample_batch(self.cfg.training.tokenizer.batch_num_samples, 1, True)
-                batch_t = self._to_device(batch_t)
-                batch_wm = self.train_dataset.sample_batch(self.cfg.training.world_model.batch_num_samples, self.cfg.common.sequence_length, True)
-                batch_wm = self._to_device(batch_wm)
-                batch_ac = self.train_dataset.sample_batch(self.cfg.training.actor_critic.batch_num_samples, 1 + self.cfg.training.actor_critic.burn_in, False)
-                batch_ac = self._to_device(batch_ac)
+                if component == "discrete_autoencoder":
+                    batch = self.train_dataset.sample_batch(self.cfg.training.tokenizer.batch_num_samples, 1, True)
+                    batch = self._to_device(batch)
+                elif component == "world_model":
+                    batch = self.train_dataset.sample_batch(self.cfg.training.world_model.batch_num_samples, self.cfg.common.sequence_length, True)
+                    batch = self._to_device(batch)
+                else:
+                    batch = self.train_dataset.sample_batch(self.cfg.training.actor_critic.batch_num_samples, 1 + self.cfg.training.actor_critic.burn_in, False)
+                    batch = self._to_device(batch)
                 
-                outputs = self.model(observations = [batch_t['observations'],batch_wm['observations'],batch_ac['observations']],
-                                            actions = [batch_t['actions'],batch_wm['actions'],batch_ac['actions']],
-                                            rewards = [batch_t['rewards'],batch_wm['rewards'],batch_ac['rewards']],
-                                            ends = [batch_t['ends'],batch_wm['ends'],batch_ac['ends']],
-                                            mask_padding = [batch_t['mask_padding'],batch_wm['mask_padding'],batch_ac['mask_padding']],
+                outputs = self.model(observations = batch['observations'],
+                                            actions = batch['actions'],
+                                            rewards = batch['rewards'],
+                                            ends = batch['ends'],
+                                            mask_padding = batch['mask_padding'],
+                                            component = component,
                                             should_preprocess = False,
                                             should_postprocess = False,
                                             output_hidden_states = True,
                                             output_attentions = False,
                                             return_dict = True)
-                losses = outputs.losses[idx]
+                losses = outputs.losses
                 with torch.autograd.set_detect_anomaly(True):
                     loss_total_step = losses.loss_total
                     loss_total_step.backward()
