@@ -676,7 +676,7 @@ class Trainer:
         if epoch > cfg_tokenizer.start_after_epochs:
             
             
-            metrics_tokenizer = self.train_component('tokenizer',self.optimizer_tokenizer, **cfg_tokenizer)
+            metrics_tokenizer = self.train_component('discrete_autoencoder',self.optimizer_tokenizer, **cfg_tokenizer)
         self.model.rl_agent.discrete_autoencoder.eval()
 
         if epoch > cfg_world_model.start_after_epochs:
@@ -729,7 +729,7 @@ class Trainer:
                         intermediate_losses[f"{component}/train/{loss_name}"] += loss_value / steps_per_epoch
 
             if max_grad_norm is not None:
-                if component == "tokenizer":
+                if component == "discrete_autoencoder":
                     torch.nn.utils.clip_grad_norm_(self.model.rl_agent.discrete_autoencoder.parameters(), max_grad_norm)
                 elif component == "world_model":
                     torch.nn.utils.clip_grad_norm_(self.model.rl_agent.world_model.parameters(), max_grad_norm)
